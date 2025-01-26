@@ -55,7 +55,7 @@ $ pip install -r requirements.txt
 
 ### 4. ngrok Setup
 - Download and install ngrok from [https://ngrok.com/](https://ngrok.com/).
-- Run the following command to start ngrok and expose your local server:
+- Run the following command in the project directory where the ngrok exe file is present to start ngrok and expose your local server:
 ```bash
 $ ngrok http 8000
 ```
@@ -75,7 +75,9 @@ $  uvicorn main:app --reload
 food-order-dialogflow-bot/
 |├── main.py                # Main Fast API application for handling webhook requests
 |├── requirements.txt     # Python dependencies
+|├── dialogflow_assets # Required intent and entites details mentioned
 |├── README.md           # Project documentation (this file)
+|├── db                  # Required SQL file to run the project
 ```
 
 ---
