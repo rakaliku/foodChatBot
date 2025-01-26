@@ -24,7 +24,7 @@ async def handle_request(request: Request):
         print(f"session id is {session_id}")
         intent_handler_dict = {
             'order.add - context: ongoing-order': add_to_order,
-            # 'order.remove - context: ongoing order': remove_from_order,
+            'order.remove - context: ongoing order': remove_from_order,
             'order.complete - context: ongoing-order': complete_order,
             'track.order - context : ongoing tracking': track_order
         }
@@ -74,7 +74,8 @@ def add_to_order(parameters: dict, session_id: str):
     )
 
 
-def remove_from_order(parameters: dict):
+def remove_from_order(parameters: dict, session_id: str):
+
     pass
 
 def complete_order(parameters: dict, session_id: str):
@@ -82,16 +83,36 @@ def complete_order(parameters: dict, session_id: str):
         fulfillmentText = " I'm sorry did not get your order no..."
     else:
         order = inprogress_order[session_id]
+        order_id = save_to_db(order)
+
+        if order_id == -1:
+            fulfillmentText = "Sorry could not place your order due to backend error" \
+                                "Please place new order again"
+        else:
+            order_total = db_helper.get_total_order_price(order_id)
+            fulfillmentText = f"Awesome..Order is placed ..order id is -{order_id} and total order is - {order_total}"
+
+
+        del inprogress_order[session_id]
     return  JSONResponse(
         content={
-            "fulfillmentText": "thanks for your orders, its in progress"
+            "fulfillmentText": fulfillmentText
         }
     )
 
 
-# def save_to_db(order: dict)
+def save_to_db(order: dict):
+    next_order_id = db_helper.get_next_order_id()
 
-def track_order(parameters: dict):
+    for food_item, quantity in order.items():
+        rcode = db_helper.insert_order_item(food_item, quantity, next_order_id)
+        if rcode == -1:
+            return  -1
+
+    db_helper.insert_order_tracking(next_order_id, "in progress")
+    return next_order_id
+
+def track_order(parameters: dict, session_id: str):
     print("track Order function started....")
     # order_id = int(parameters.get('order_id', None))
     order_id = int(parameters['order_id'])
