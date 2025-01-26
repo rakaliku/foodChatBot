@@ -13,15 +13,12 @@ inprogress_order = {}
 
 @app.post("/")
 async def handle_request(request: Request):
-    print("handler request......")
     try:
         payload = await request.json()
         intent = payload['queryResult']['intent']['displayName']
-        print(f"intent is {intent}")
         parameters = payload['queryResult']['parameters']
         output_contexts = payload['queryResult']['outputContexts']
         session_id = generic_helper.extract_session(output_contexts[0]["name"])
-        print(f"session id is {session_id}")
         intent_handler_dict = {
             'order.add - context: ongoing-order': add_to_order,
             'order.remove - context: ongoing order': remove_from_order,
@@ -29,7 +26,6 @@ async def handle_request(request: Request):
             'track.order - context : ongoing tracking': track_order
         }
         if intent in intent_handler_dict:
-            print(f"intent is if block {intent}")
             return intent_handler_dict[intent](parameters, session_id)
         else:
             return JSONResponse(content={"fulfillmentText":f"Unhandled Intent {intent}"})
@@ -42,13 +38,8 @@ async def handle_request(request: Request):
             }
         )
 
-    # if intent == "track.order - context : ongoing tracking":
-    #     print(intent)
-    #     return track_order(parameters)
-
 
 def add_to_order(parameters: dict, session_id: str):
-    print(" add to order function started........")
     food_items = parameters["food-item"]
     quantities = parameters["number"]
 
@@ -62,11 +53,7 @@ def add_to_order(parameters: dict, session_id: str):
             inprogress_order[session_id] = current_food_dict
         else:
             inprogress_order[session_id] = new_food_dict
-
-        print("*********************")
-        print(inprogress_order)
         order_str = generic_helper.get_str_from_food_dict(inprogress_order[session_id])
-        print("order placed.........")
         fulfillmentText = f"so far you ordered : {order_str}. Do you need anything else?"
 
     return JSONResponse(content=
@@ -145,8 +132,6 @@ def save_to_db(order: dict):
     return next_order_id
 
 def track_order(parameters: dict, session_id: str):
-    print("track Order function started....")
-    # order_id = int(parameters.get('order_id', None))
     order_id = int(parameters['order_id'])
     if not order_id:
         return JSONResponse(
